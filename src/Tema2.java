@@ -10,7 +10,7 @@ class Constants {
     static final String outputProductsPath = "order_products_out.txt";
 }
 
-public class Main {
+public class Tema2 {
     public static void main(String[] args) throws IOException {
 
         if (args.length != 2) {
@@ -29,8 +29,8 @@ public class Main {
         File ordersOutputFile = new File(Constants.outputOrdersPath);
         File productsOutputFile = new File(Constants.outputProductsPath);
 
-        ordersOutputFile.createNewFile();
-        productsOutputFile.createNewFile();
+        boolean status = ordersOutputFile.createNewFile();
+        status = productsOutputFile.createNewFile();
 
         FileWriter ordersWriter = new FileWriter(Constants.outputOrdersPath);
         FileWriter productsWriter = new FileWriter(Constants.outputProductsPath);

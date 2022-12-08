@@ -7,7 +7,7 @@ JC = javac
 	$(JC) $(JFLAGS) $*.java
 
 CLASSES = \
-		  Main.java
+		  Tema2.java
 
 default: classes
 
