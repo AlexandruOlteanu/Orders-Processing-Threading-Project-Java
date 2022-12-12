@@ -11,6 +11,8 @@ CLASSES = \
 
 default: classes
 
+build: classes
+
 classes: $(CLASSES:.java=.class)
 
 clean:

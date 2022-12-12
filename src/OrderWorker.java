@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -7,15 +8,19 @@ public class OrderWorker implements Runnable{
 
     StringBuilder orderId;
     int numberOfProducts;
-    Scanner productScanner;
+
+    File productInput;
 
     int threadsNumber;
 
-    public OrderWorker(StringBuilder orderId, int numberOfProducts, Scanner productsScanner, int threadsNumber) {
+    Order order;
+
+    public OrderWorker(StringBuilder orderId, int numberOfProducts, File productInput, int threadsNumber) {
         this.orderId = orderId;
         this.numberOfProducts = numberOfProducts;
-        this.productScanner = productsScanner;
+        this.productInput = productInput;
         this.threadsNumber = threadsNumber;
+        order = new Order(orderId.toString(), numberOfProducts, "Unshipped");
     }
 
     @Override
@@ -23,9 +28,17 @@ public class OrderWorker implements Runnable{
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadsNumber);
 
+        Scanner productScanner = null;
+        try {
+            productScanner = new Scanner(productInput);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
         StringBuilder line = new StringBuilder();
         StringBuilder orderId = new StringBuilder();
         StringBuilder productId = new StringBuilder();
+
         while (productScanner.hasNextLine()) {
             line.setLength(0);
             orderId.setLength(0);
@@ -41,9 +54,10 @@ public class OrderWorker implements Runnable{
                     break;
                 }
             }
+            Product product = new Product();
             productId.append(line.substring(position));
-            executorService.submit(new ProductWorker());
+            executorService.submit(new ProductWorker(order, productId));
         }
-
+        executorService.shutdown();
     }
 }

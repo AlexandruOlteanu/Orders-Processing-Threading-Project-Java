@@ -58,7 +58,7 @@ public class Tema2 {
                 }
             }
             numberOfProducts = Integer.parseInt(line.substring(position));
-            executorService.submit(new OrderWorker(orderId, numberOfProducts, productsScanner, threadsNumber));
+            executorService.submit(new OrderWorker(orderId, numberOfProducts, productsInput, threadsNumber));
         }
         executorService.shutdown();
         ordersWriter.close();
