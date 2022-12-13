@@ -27,9 +27,6 @@ public class OrderWorker implements Runnable{
     @Override
     public void run() {
 
-        if (order.orderId.equals("o_hl8rhrangd")) {
-            System.out.println("Diana" + order.orderId);
-        }
         ExecutorService executorService = Executors.newFixedThreadPool(threadsNumber);
 
         Scanner productScanner = null;
@@ -58,7 +55,6 @@ public class OrderWorker implements Runnable{
                     break;
                 }
             }
-            Product product = new Product();
             productId.append(line.substring(position));
             Database.productsData.put(orderId.toString(), productId);
             if (Database.activeOrders.contains(orderId.toString())) {
