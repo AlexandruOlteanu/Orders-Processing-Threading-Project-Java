@@ -15,9 +15,6 @@ public class ProductWorker implements Runnable{
     @Override
     public void run() {
         if (order.orderId.equals(orderId.toString())) {
-            if (order.orderId.equals("o_hl8rhrangd")) {
-                System.out.println("Marius" + orderId);
-            }
             try {
                 Database.productsWriter.write(orderId + "," + productId + ",shipped\n");
                 Database.productsWriter.flush();
