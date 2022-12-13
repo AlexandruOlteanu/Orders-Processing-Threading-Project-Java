@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,12 +21,15 @@ public class OrderWorker implements Runnable{
         this.numberOfProducts = numberOfProducts;
         this.productInput = productInput;
         this.threadsNumber = threadsNumber;
-        order = new Order(orderId.toString(), numberOfProducts, "Unshipped");
+        order = new Order(orderId.toString(), numberOfProducts);
     }
 
     @Override
     public void run() {
 
+        if (order.orderId.equals("o_hl8rhrangd")) {
+            System.out.println("Diana" + order.orderId);
+        }
         ExecutorService executorService = Executors.newFixedThreadPool(threadsNumber);
 
         Scanner productScanner = null;
@@ -56,8 +60,24 @@ public class OrderWorker implements Runnable{
             }
             Product product = new Product();
             productId.append(line.substring(position));
-            executorService.submit(new ProductWorker(order, productId));
+            Database.productsData.put(orderId.toString(), productId);
+            if (Database.activeOrders.contains(orderId.toString())) {
+                executorService.submit(new ProductWorker(order, orderId, productId));
+            }
         }
+
         executorService.shutdown();
+    }
+
+    public static synchronized void shippedProductNotification(String orderId) {
+        Database.hasProducts.replace(orderId, Database.hasProducts.get(orderId.toString()) - 1);
+        if (Database.hasProducts.get(orderId) == 0) {
+            try {
+                Database.ordersWriter.write(orderId + "," + Database.ordersData.get(orderId) + ",shipped\n");
+                Database.ordersWriter.flush();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

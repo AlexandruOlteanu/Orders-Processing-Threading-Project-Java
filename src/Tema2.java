@@ -2,9 +2,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.*;
 
 class Constants {
     static final String inputOrdersPath = "/orders.txt";
@@ -14,7 +12,7 @@ class Constants {
 }
 
 public class Tema2 {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
 
         if (args.length != 2) {
             System.err.println("Wrong number of arguments, to run it use the following format:\n");
@@ -35,9 +33,8 @@ public class Tema2 {
         boolean status = ordersOutputFile.createNewFile();
         status = productsOutputFile.createNewFile();
 
-        FileWriter ordersWriter = new FileWriter(Constants.outputOrdersPath);
-        FileWriter productsWriter = new FileWriter(Constants.outputProductsPath);
-
+        Database.ordersWriter = new FileWriter(Constants.outputOrdersPath);
+        Database.productsWriter = new FileWriter(Constants.outputProductsPath);
         ExecutorService executorService = Executors.newFixedThreadPool(threadsNumber);
 
         StringBuilder line = new StringBuilder();
@@ -58,11 +55,16 @@ public class Tema2 {
                 }
             }
             numberOfProducts = Integer.parseInt(line.substring(position));
+            Database.ordersData.put(orderId.toString(), numberOfProducts);
+            if (numberOfProducts != 0) {
+                Database.activeOrders.add(orderId.toString());
+            }
+            Database.hasProducts.put(orderId.toString(), numberOfProducts);
             executorService.submit(new OrderWorker(orderId, numberOfProducts, productsInput, threadsNumber));
         }
-        executorService.shutdown();
-        ordersWriter.close();
-        productsWriter.close();
 
+        executorService.shutdown();
+        Database.ordersWriter.flush();
+        Database.productsWriter.flush();
     }
 }
