@@ -1,7 +1,5 @@
 import java.io.FileWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class Database {
 
@@ -15,5 +13,15 @@ public class Database {
     public static FileWriter productsWriter;
 
     public static HashMap<String, StringBuilder> productsData = new HashMap<>();
+
+    public static List<Pair> rawData = new ArrayList<>();
+
+    public static ArrayList<StringBuilder> finalData = new ArrayList<>();
+
+    public static ArrayList<Order> orders = new ArrayList<>();
+
+    public static List<Pair> firstPartOrder = new ArrayList<>();
+
+    public static List<Pair> lastPartOrder = new ArrayList<>();
 
 }
