@@ -1,6 +1,8 @@
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
@@ -13,12 +15,12 @@ public class Tema2 {
             return;
         }
 
-        File ordersInput = new File(args[0] + Constants.inputOrdersPath);
-        File productsInput = new File(args[0] + Constants.inputProductsPath);
-        int threadsNumber = Integer.parseInt(args[1]);
+        final String ordersInputPath = args[0] + Constants.inputOrdersPath;
+        final String productsInputPath = args[0] + Constants.inputProductsPath;
 
-        Scanner ordersScanner = new Scanner(ordersInput);
-        Scanner productsScanner = new Scanner(productsInput);
+        FileInputStream ordersInput = new FileInputStream(ordersInputPath);
+        FileInputStream productsInput = new FileInputStream(productsInputPath);
+        int threadsNumber = Integer.parseInt(args[1]);
 
         File ordersOutputFile = new File(Constants.outputOrdersPath);
         File productsOutputFile = new File(Constants.outputProductsPath);
@@ -28,35 +30,51 @@ public class Tema2 {
 
         Database.ordersWriter = new FileWriter(Constants.outputOrdersPath);
         Database.productsWriter = new FileWriter(Constants.outputProductsPath);
-        ExecutorService executorService = Executors.newFixedThreadPool(threadsNumber);
+        ExecutorService ordersExecutorService = Executors.newFixedThreadPool(threadsNumber);
+        ExecutorService productsExecutorService = Executors.newFixedThreadPool(threadsNumber);
 
-        StringBuilder line = new StringBuilder();
-        StringBuilder orderId = new StringBuilder();
-        int numberOfProducts;
-        while (ordersScanner.hasNextLine()) {
-            line.setLength(0);
-            orderId.setLength(0);
-            line.append(ordersScanner.nextLine());
-            int position = 0;
-            for (int i = 0; i < line.length(); ++i) {
-                if (line.charAt(i) != ',') {
-                    orderId.append(line.charAt(i));
-                }
-                else {
-                    position = i + 1;
-                    break;
-                }
+        FileChannel fileChannel = ordersInput.getChannel();
+        long numberOfLines = fileChannel.size() / Constants.APPROXIMATE_ORDER_LINE_SIZE;
+        long chunk_size = numberOfLines / threadsNumber;
+        int data_start = 1, data_end = (int) chunk_size;
+        for (int i = 0; i < threadsNumber; ++i) {
+            if (i < threadsNumber - 1) {
+                ordersExecutorService.submit(new OrderWorker(ordersInputPath, productsInputPath, data_start, data_end, threadsNumber, productsExecutorService, "NOT_FINAL"));
             }
-            numberOfProducts = Integer.parseInt(line.substring(position));
-            Database.ordersData.put(orderId.toString(), numberOfProducts);
-            if (numberOfProducts != 0) {
-                Database.activeOrders.add(orderId.toString());
+            else {
+                ordersExecutorService.submit(new OrderWorker(ordersInputPath, productsInputPath, data_start, data_end, threadsNumber, productsExecutorService, "FINAL"));
             }
-            Database.hasProducts.put(orderId.toString(), numberOfProducts);
-            executorService.submit(new OrderWorker(orderId, numberOfProducts, productsInput, threadsNumber));
+            data_start += chunk_size;
+            data_end += chunk_size;
         }
-
-        executorService.shutdown();
+//        StringBuilder line = new StringBuilder();
+//        StringBuilder orderId = new StringBuilder();
+//        int numberOfProducts;
+//        while (ordersScanner.hasNextLine()) {
+//            line.setLength(0);
+//            orderId.setLength(0);
+//            line.append(ordersScanner.nextLine());
+//            int position = 0;
+//            for (int i = 0; i < line.length(); ++i) {
+//                if (line.charAt(i) != ',') {
+//                    orderId.append(line.charAt(i));
+//                }
+//                else {
+//                    position = i + 1;
+//                    break;
+//                }
+//            }
+//            numberOfProducts = Integer.parseInt(line.substring(position));
+//            Database.ordersData.put(orderId.toString(), numberOfProducts);
+//            if (numberOfProducts != 0) {
+//                Database.activeOrders.add(orderId.toString());
+//            }
+//            Database.hasProducts.put(orderId.toString(), numberOfProducts);
+//            executorService.submit(new OrderWorker(orderId, numberOfProducts, productsInput, threadsNumber));
+//        }
+        ordersExecutorService.shutdown();
+        ordersExecutorService.awaitTermination(100, TimeUnit.SECONDS);
+        productsExecutorService.shutdown();
         Database.ordersWriter.flush();
         Database.productsWriter.flush();
     }
