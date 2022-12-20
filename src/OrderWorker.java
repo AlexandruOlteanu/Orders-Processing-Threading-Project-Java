@@ -1,9 +1,10 @@
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class OrderWorker implements Runnable{
 
@@ -11,9 +12,9 @@ public class OrderWorker implements Runnable{
 
     String productsInputPath;
 
-    Integer data_start;
+    Integer order_data_start;
 
-    Integer data_end;
+    Integer order_data_end;
 
     String status;
 
@@ -23,11 +24,11 @@ public class OrderWorker implements Runnable{
 
     Order order;
 
-    public OrderWorker(String ordersInputPath, String productsInputPath, int data_start, int data_end, int threadsNumber, ExecutorService productsExecutorService, String status) {
+    public OrderWorker(String ordersInputPath, String productsInputPath, int order_data_start, int order_data_end, int threadsNumber, ExecutorService productsExecutorService, String status) {
         this.ordersInputPath = ordersInputPath;
         this.productsInputPath = productsInputPath;
-        this.data_start = data_start;
-        this.data_end = data_end;
+        this.order_data_start = order_data_start;
+        this.order_data_end = order_data_end;
         this.threadsNumber = threadsNumber;
         this.productsExecutorService = productsExecutorService;
         this.status = status;
@@ -47,7 +48,7 @@ public class OrderWorker implements Runnable{
         int lineNumber = 1;
         StringBuilder line = new StringBuilder();
         while (true) {
-            if (!status.equals("FINAL") && lineNumber > data_end) {
+            if (!status.equals("FINAL") && lineNumber > order_data_end) {
                 break;
             }
             line.setLength(Constants.ZERO);
@@ -56,47 +57,41 @@ public class OrderWorker implements Runnable{
                 break;
             }
             line.append(value);
-            if (lineNumber >= data_start) {
-                order = Functions.processLine(line.toString());
+            if (lineNumber >= order_data_start) {
+                order = Functions.processOrderLine(line.toString());
                 Database.ordersData.put(order.orderId, order.numberOfProducts);
                 if (order.numberOfProducts != 0) {
                     Database.activeOrders.add(order.orderId);
                 }
                 Database.hasProducts.put(order.orderId, order.numberOfProducts);
 
-                File productsInput = new File(productsInputPath);
-                Scanner productsScanner = null;
+                FileInputStream productsInput = null;
                 try {
-                    productsScanner = new Scanner(productsInput);
+                    productsInput = new FileInputStream(productsInputPath);
                 } catch (FileNotFoundException e) {
                     throw new RuntimeException(e);
                 }
+                FileChannel fileChannel = productsInput.getChannel();
+                long numberOfLines = 0;
+                try {
+                    numberOfLines = fileChannel.size() / Constants.APPROXIMATE_PRODUCT_LINE_SIZE;
+//                    System.out.println(numberOfLines);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                long chunk_size = numberOfLines / threadsNumber;
+                int product_data_start = 1, product_data_end = (int) chunk_size;
 
-                StringBuilder line1 = new StringBuilder();
-                StringBuilder orderId = new StringBuilder();
-                StringBuilder productId = new StringBuilder();
-
-                while (productsScanner.hasNextLine()) {
-                    line1.setLength(0);
-                    orderId.setLength(0);
-                    productId.setLength(0);
-                    line1.append(productsScanner.nextLine());
-//                    System.out.println(line1);
-                    int position = 0;
-                    for (int i = 0; i < line1.length(); ++i) {
-                        if (line1.charAt(i) != ',') {
-                            orderId.append(line1.charAt(i));
-                        }
-                        else {
-                            position = i + 1;
-                            break;
-                        }
+                for (int i = 0; i < threadsNumber; ++i) {
+                    Database.x = 0;
+                    if (i < threadsNumber - 1) {
+                        productsExecutorService.submit(new ProductWorker(order, productsInputPath, product_data_start, product_data_end, "NOT_FINAL"));
                     }
-                    productId.append(line1.substring(position));
-                    Database.productsData.put(orderId.toString(), productId);
-                    if (Database.activeOrders.contains(orderId.toString())) {
-                        productsExecutorService.submit(new ProductWorker(order, orderId, productId));
+                    else {
+                        productsExecutorService.submit(new ProductWorker(order, productsInputPath, product_data_start, product_data_end, "FINAL"));
                     }
+                    product_data_start += chunk_size;
+                    product_data_end += chunk_size;
                 }
             }
             ++lineNumber;

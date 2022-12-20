@@ -19,7 +19,6 @@ public class Tema2 {
         final String productsInputPath = args[0] + Constants.inputProductsPath;
 
         FileInputStream ordersInput = new FileInputStream(ordersInputPath);
-        FileInputStream productsInput = new FileInputStream(productsInputPath);
         int threadsNumber = Integer.parseInt(args[1]);
 
         File ordersOutputFile = new File(Constants.outputOrdersPath);
@@ -36,16 +35,16 @@ public class Tema2 {
         FileChannel fileChannel = ordersInput.getChannel();
         long numberOfLines = fileChannel.size() / Constants.APPROXIMATE_ORDER_LINE_SIZE;
         long chunk_size = numberOfLines / threadsNumber;
-        int data_start = 1, data_end = (int) chunk_size;
+        int order_data_start = 1, order_data_end = (int) chunk_size;
         for (int i = 0; i < threadsNumber; ++i) {
             if (i < threadsNumber - 1) {
-                ordersExecutorService.submit(new OrderWorker(ordersInputPath, productsInputPath, data_start, data_end, threadsNumber, productsExecutorService, "NOT_FINAL"));
+                ordersExecutorService.submit(new OrderWorker(ordersInputPath, productsInputPath, order_data_start, order_data_end, threadsNumber, productsExecutorService, "NOT_FINAL"));
             }
             else {
-                ordersExecutorService.submit(new OrderWorker(ordersInputPath, productsInputPath, data_start, data_end, threadsNumber, productsExecutorService, "FINAL"));
+                ordersExecutorService.submit(new OrderWorker(ordersInputPath, productsInputPath, order_data_start, order_data_end, threadsNumber, productsExecutorService, "FINAL"));
             }
-            data_start += chunk_size;
-            data_end += chunk_size;
+            order_data_start += chunk_size;
+            order_data_end += chunk_size;
         }
 //        StringBuilder line = new StringBuilder();
 //        StringBuilder orderId = new StringBuilder();
