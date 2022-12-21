@@ -6,18 +6,12 @@ public class ProductWorker implements Runnable{
 
     String productsInputPath;
 
-    Integer product_data_start;
+    Integer productId;
 
-    Integer product_data_end;
-
-    String status;
-
-    public ProductWorker(Order order, String productsInputPath, Integer product_data_start, Integer product_data_end, String status) {
+    public ProductWorker(Order order, String productsInputPath, Integer productId) {
         this.order = order;
         this.productsInputPath = productsInputPath;
-        this.product_data_start = product_data_start;
-        this.product_data_end = product_data_end;
-        this.status = status;
+        this.productId = productId;
     }
 
     @Override
@@ -27,23 +21,21 @@ public class ProductWorker implements Runnable{
             FileReader productFileReader = new FileReader(productsInputPath);
             BufferedReader productsInput = new BufferedReader(productFileReader);
 
-            int lineNumber = 1;
+            int foundProduct = 0;
             StringBuilder line = new StringBuilder();
             while (true) {
-                if (!status.equals("FINAL") && lineNumber > product_data_end) {
-                    break;
-                }
                 line.setLength(Constants.ZERO);
                 String value = productsInput.readLine();
                 if (value == null) {
                     break;
                 }
                 line.append(value);
-                if (lineNumber >= product_data_start) {
-                    Product product = Functions.processProductLine(line.toString());
-                    Database.productsData.put(product.orderId, product.productId);
+                Product product = Functions.processProductLine(line.toString());
+                if (product.orderId.equals(order.orderId)) {
+                    ++foundProduct;
+                }
+                if (foundProduct == productId) {
                     if (Database.activeOrders.contains(product.orderId)) {
-                        if (order.orderId.equals(product.orderId)) {
                             try {
                                 Database.productsWriter.write(product.orderId + "," + product.productId + ",shipped\n");
                                 Database.productsWriter.flush();
@@ -51,10 +43,9 @@ public class ProductWorker implements Runnable{
                                 throw new RuntimeException(e);
                             }
                             OrderWorker.shippedProductNotification(product.orderId);
-                        }
                     }
+                    break;
                 }
-                ++lineNumber;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
