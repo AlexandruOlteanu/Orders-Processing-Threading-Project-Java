@@ -1,6 +1,4 @@
 import java.io.*;
-import java.nio.channels.FileChannel;
-import java.util.Scanner;
 
 public class ProductWorker implements Runnable{
 
@@ -25,7 +23,6 @@ public class ProductWorker implements Runnable{
     @Override
     public void run() {
 
-        Scanner productsScanner = null;
         try {
             FileReader productFileReader = new FileReader(productsInputPath);
             BufferedReader productsInput = new BufferedReader(productFileReader);
@@ -38,15 +35,10 @@ public class ProductWorker implements Runnable{
                 }
                 line.setLength(Constants.ZERO);
                 String value = productsInput.readLine();
-//                System.out.println("Alex " + Database.x + " " + product_data_end);
-                Database.x++;
                 if (value == null) {
                     break;
                 }
                 line.append(value);
-                if (Database.x < 680) {
-                    System.out.println(line + " " + Database.x);
-                }
                 if (lineNumber >= product_data_start) {
                     Product product = Functions.processProductLine(line.toString());
                     Database.productsData.put(product.orderId, product.productId);
@@ -61,8 +53,8 @@ public class ProductWorker implements Runnable{
                             OrderWorker.shippedProductNotification(product.orderId);
                         }
                     }
-                    ++lineNumber;
                 }
+                ++lineNumber;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

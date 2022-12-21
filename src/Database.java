@@ -16,6 +16,4 @@ public class Database {
 
     public static HashMap<String, String> productsData = new HashMap<>();
 
-    public static Integer x = 0;
-
 }

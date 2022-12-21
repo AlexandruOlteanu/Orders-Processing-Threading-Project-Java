@@ -3,11 +3,10 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.util.Scanner;
 import java.util.concurrent.*;
 
 public class Tema2 {
-    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         if (args.length != 2) {
             System.err.println("Wrong number of arguments, to run it use the following format:\n");
@@ -46,33 +45,9 @@ public class Tema2 {
             order_data_start += chunk_size;
             order_data_end += chunk_size;
         }
-//        StringBuilder line = new StringBuilder();
-//        StringBuilder orderId = new StringBuilder();
-//        int numberOfProducts;
-//        while (ordersScanner.hasNextLine()) {
-//            line.setLength(0);
-//            orderId.setLength(0);
-//            line.append(ordersScanner.nextLine());
-//            int position = 0;
-//            for (int i = 0; i < line.length(); ++i) {
-//                if (line.charAt(i) != ',') {
-//                    orderId.append(line.charAt(i));
-//                }
-//                else {
-//                    position = i + 1;
-//                    break;
-//                }
-//            }
-//            numberOfProducts = Integer.parseInt(line.substring(position));
-//            Database.ordersData.put(orderId.toString(), numberOfProducts);
-//            if (numberOfProducts != 0) {
-//                Database.activeOrders.add(orderId.toString());
-//            }
-//            Database.hasProducts.put(orderId.toString(), numberOfProducts);
-//            executorService.submit(new OrderWorker(orderId, numberOfProducts, productsInput, threadsNumber));
-//        }
+
         ordersExecutorService.shutdown();
-        ordersExecutorService.awaitTermination(100, TimeUnit.SECONDS);
+        ordersExecutorService.awaitTermination(Constants.MAXIMUM_WAIT_TIME, TimeUnit.SECONDS);
         productsExecutorService.shutdown();
         Database.ordersWriter.flush();
         Database.productsWriter.flush();

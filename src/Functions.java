@@ -2,7 +2,7 @@ import java.util.Scanner;
 
 public class Functions {
 
-    public static synchronized Order processOrderLine(String line) {
+    public static Order processOrderLine(String line) {
         int position = 0;
         int numberOfProducts = 0;
         StringBuilder orderId = new StringBuilder();
@@ -22,7 +22,7 @@ public class Functions {
         return new Order(orderId.toString(), numberOfProducts);
     }
 
-    public static synchronized Product processProductLine(String line) {
+    public static Product processProductLine(String line) {
 
         StringBuilder orderId = new StringBuilder();
         StringBuilder productId = new StringBuilder();
@@ -42,7 +42,7 @@ public class Functions {
         return new Product(orderId.toString(), productId.toString());
     }
 
-    public static synchronized String readLine(Scanner scanner) {
+    public static String readLine(Scanner scanner) {
 
         if (scanner.hasNextLine()) {
             return scanner.nextLine();
@@ -50,5 +50,4 @@ public class Functions {
 
         return null;
     }
-
 }

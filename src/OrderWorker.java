@@ -3,6 +3,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 
@@ -37,7 +38,7 @@ public class OrderWorker implements Runnable{
     @Override
     public void run() {
 
-        Scanner orderScanner = null;
+        Scanner orderScanner;
         try {
             File ordersInput = new File(ordersInputPath);
             orderScanner = new Scanner(ordersInput);
@@ -72,10 +73,9 @@ public class OrderWorker implements Runnable{
                     throw new RuntimeException(e);
                 }
                 FileChannel fileChannel = productsInput.getChannel();
-                long numberOfLines = 0;
+                long numberOfLines;
                 try {
                     numberOfLines = fileChannel.size() / Constants.APPROXIMATE_PRODUCT_LINE_SIZE;
-//                    System.out.println(numberOfLines);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -83,7 +83,6 @@ public class OrderWorker implements Runnable{
                 int product_data_start = 1, product_data_end = (int) chunk_size;
 
                 for (int i = 0; i < threadsNumber; ++i) {
-                    Database.x = 0;
                     if (i < threadsNumber - 1) {
                         productsExecutorService.submit(new ProductWorker(order, productsInputPath, product_data_start, product_data_end, "NOT_FINAL"));
                     }
@@ -100,7 +99,7 @@ public class OrderWorker implements Runnable{
 
     public static synchronized void shippedProductNotification(String orderId) {
         Database.hasProducts.replace(orderId, Database.hasProducts.get(orderId) - 1);
-        if (Database.hasProducts.get(orderId) == 0) {
+        if (Objects.equals(Database.hasProducts.get(orderId), Constants.ZERO)) {
             try {
                 Database.ordersWriter.write(orderId + "," + Database.ordersData.get(orderId) + ",shipped\n");
                 Database.ordersWriter.flush();
