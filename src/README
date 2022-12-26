@@ -1,0 +1,25 @@
+<Copyright Alexandru Olteanu, grupa 332CA, alexandruolteanu2001@gmail.com>
+
+    In implementarea acestei teme am folosit paralelizare in Java pentru a
+livra produsele si marca comenzile ca finalizate. Pentru a realiza lucrul
+cu comenzile am aflat dimensiunea in bytes a fisierului de input si am
+aproximat numarul de linii al fisierului. In functie de numarul de threaduri
+am impartit pentru fiecare worker o bucata unica de comenzi pentru a le
+procesa. In cadrul managementului acestui proces am folosit un threadpool
+care sa porneasca aceste threaduri de nivel unu.
+    In interiorul unui thread de nivel unul am paorcurs linniile fisierului
+de comenzi pana cand se ajunge la sectiunea dorita de care respectivul worker
+este responsabil. Am extras datele din linnile necesare si am inceput alte
+threaduri de nivel doi pentru procesarea fiecarui produs individual din comenzi.
+Pentru a ma asigura ca maxim P threaduri ruleaza in paralel si la acest nivel
+m-am folosit din nou de un fixed threadpool. Astfel, am pornit N threaduri pentru
+fiecare comanda, unde N este numarul de produse din acea comanda, acestea fiind
+limitate si procesate de executorService. Pentru a ma asigura ca un thread cauta
+un produs individual am trimis un Id unic marcand numarul produsului care trebuie
+livrat. Apoi, in threadurile de nivel doi am cautat produsul linie cu linie. In
+momentul gasirii acestuia am scris in fisierul de output pentru produse si am
+trimis o notificare de livrare de produs pentru comanda respectiva. In acest mod,
+dupa ce o notificare face ca numarul de produse livrate corespunzator unei comenzi
+sa fie complet, se afiseaza rezultatul in fisierul de output al comenzilor.
+    Tema curenta a fost putin dificil de inteles dar per total un scop didactic
+bun.

@@ -66,31 +66,8 @@ public class OrderWorker implements Runnable{
                 }
                 Database.hasProducts.put(order.orderId, order.numberOfProducts);
 
-                FileInputStream productsInput = null;
-                try {
-                    productsInput = new FileInputStream(productsInputPath);
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-                FileChannel fileChannel = productsInput.getChannel();
-                long numberOfLines;
-                try {
-                    numberOfLines = fileChannel.size() / Constants.APPROXIMATE_PRODUCT_LINE_SIZE;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                long chunk_size = numberOfLines / threadsNumber;
-                int product_data_start = 1, product_data_end = (int) chunk_size;
-
-                for (int i = 0; i < threadsNumber; ++i) {
-                    if (i < threadsNumber - 1) {
-                        productsExecutorService.submit(new ProductWorker(order, productsInputPath, product_data_start, product_data_end, "NOT_FINAL"));
-                    }
-                    else {
-                        productsExecutorService.submit(new ProductWorker(order, productsInputPath, product_data_start, product_data_end, "FINAL"));
-                    }
-                    product_data_start += chunk_size;
-                    product_data_end += chunk_size;
+                for (int i = 0; i < order.numberOfProducts; ++i) {
+                    productsExecutorService.submit(new ProductWorker(order, productsInputPath, i + 1));
                 }
             }
             ++lineNumber;

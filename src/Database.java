@@ -14,6 +14,4 @@ public class Database {
     public static FileWriter ordersWriter;
     public static FileWriter productsWriter;
 
-    public static HashMap<String, String> productsData = new HashMap<>();
-
 }

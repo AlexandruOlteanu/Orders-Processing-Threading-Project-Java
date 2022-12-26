@@ -6,8 +6,6 @@ public class Constants {
 
         static final Integer APPROXIMATE_ORDER_LINE_SIZE = 17;
 
-        static final Integer APPROXIMATE_PRODUCT_LINE_SIZE = 26;
-
         static final Integer ZERO = 0;
 
         static final Integer MAXIMUM_WAIT_TIME = 100;
